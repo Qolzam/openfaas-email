@@ -1,4 +1,5 @@
 "use strict"
+const fs = require("fs")
 const nodemailer = require('nodemailer');
 const md = require('markdown-it')({
   html: true,
