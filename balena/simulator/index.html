@@ -1,0 +1,147 @@
+<html>
+
+<head>
+    <title>Drone Simulator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="http://cdn.emitter.io/js/emitter.min.js"></script>
+    <script>
+        var emitter = emitter.connect({ host: "__BROKER_HOST__", port: __BROKER_PORT__ })
+        var key = '__BROKER_KEY__'
+        var channel = '__CHANNEL__'
+        var shortcut = 'a0'
+
+        emitter.on('error', function (m) {
+            console.log('Error: ' + m)
+        })
+        emitter.on('connect', function () {
+            console.log('Connected')
+        })
+        emitter.on('disconnect', function () {
+            console.log('Disconnected')
+        })
+
+        function subscribe() {
+            emitter.subscribe({
+                key: key,
+                channel: channel
+            })
+        }
+
+        function unsubscribe() {
+            emitter.unsubscribe({
+                key: key,
+                channel: channel
+            })
+        }
+
+        function publish(message) {
+            emitter.publish({
+                key: key,
+                channel: channel,
+                message: JSON.stringify(message)
+            })
+        }
+
+
+    </script>
+    <script type="module">
+        import LatLon from 'https://cdn.jsdelivr.net/npm/geodesy@2.2.0/latlon-spherical.min.js';
+        subscribe()
+
+        // UUID version 4
+        function uuidv4() {
+            return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+                (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+            );
+        }
+
+        var drones = {}
+        // Add a new drone
+        function addDrone() {
+            let loc = new LatLon(36.447500, 52.826100);
+            const range = 4000
+            const dest = loc.destinationPoint(
+                (Math.random() * (range - 500) + 500),     // random distance in range
+                (Math.random() * 360),                          // random bearing
+            );
+            const droneId = uuidv4()
+            drones = {
+                ...drones,
+                [droneId]: { id: droneId, dest: dest, bearing: 0, loc: loc, speed: 100, accel: 0, power: 10 }
+            }
+            document.getElementById("drone_counter").innerHTML = Object.keys(drones).length + "  active drones.";
+            startDrone(droneId)
+        }
+
+        // Start drone traveling
+        function startDrone(droneId) {
+            setInterval(() => {
+                let { loc, speed, bearing, dest, accel, power } = drones[droneId]
+
+                drones[droneId].loc = loc.destinationPoint(calcDistanceTraveled(1, speed, accel), bearing);
+                drones[droneId].bearing = loc.initialBearingTo(dest) || 0;
+                drones[droneId].speed = Math.min(power * 10, Math.max(speed + accel, 0));
+
+                const distToDest = drones[droneId].loc.distanceTo(drones[droneId].dest); // meters
+                const stopDist = calcStopDistance(speed, power);
+
+                if (distToDest < power) {
+                    console.log("stopping");
+                    drones[droneId].loc = dest;
+                    drones[droneId].speed = 0;
+                    drones[droneId].accel = 0;
+                } else if (distToDest < (stopDist + (2 * speed))) {
+                    console.log("slowing down");
+                    drones[droneId].accel = -power;
+                } else {
+                    console.log("full speed ahead");
+                    drones[droneId].accel = power;
+                }
+
+
+
+
+                publish({ lt: loc.lat, lg: loc.longitude, id: droneId, s: speed })
+                console.log(distToDest, drones[droneId])
+            }, 1000);
+        }
+
+        // Calculate distance traveled
+        function calcDistanceTraveled(time, speed, accel) {
+            const Vi = speed;
+            const a = accel;
+            const t = time;
+            return (Vi * t) + (.5 * a * t * t);
+        }
+
+        function calcStopDistance(speed, power) {
+            const Vi = speed;
+            const a = power;
+            const t = (Vi / a);  // time required to stop
+            return (Vi * t) - (.5 * a * t * t);
+        }
+
+        // Bind click events
+        document.querySelector("#add_drone").addEventListener("click", addDrone);
+
+    </script>
+</head>
+
+<body>
+    <div class="card text-center">
+        <div class="card-header">
+            Telar
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Drone Simulation</h5>
+            <p class="card-text">Please click on "Add Drone".Results are shown in the console.</p>
+            <button id="add_drone" type="button" class="btn btn-primary">Add Drone</button>
+        </div>
+        <div id="drone_counter" class="card-footer text-muted">
+            No Active Drone!
+        </div>
+    </div>
+</body>
+
+</html>

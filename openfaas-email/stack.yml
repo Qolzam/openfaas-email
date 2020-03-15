@@ -1,0 +1,9 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:31112
+functions:
+  email-fn:
+    lang: node12
+    handler: ./email-fn
+    image: email-fn:latest

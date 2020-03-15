@@ -1,0 +1,61 @@
+version: '3'
+services:
+  nginx:
+    restart: always
+    build:
+      context: ./nginx
+    ports:
+      - '3030:80'
+  broker:
+    image: 'emitter/server:latest'
+    environment:
+      - EMITTER_LICENSE=RfBEIAMxegttQnGn-2tzsESQe-kfrPXftJ_feJfsWKxrt_bfGB-xipSQortqMkjNFFQw1_FkiR29FLLWo4C_1MEIz6rLhwMB:2
+    ports:
+      - "8081:8080"
+  frontend:
+    volumes:
+      - /app/node_modules
+      - ./frontend:/app
+    build:
+      dockerfile: dev.Dockerfile
+      context: ./frontend
+    depends_on:
+      - broker
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_BROKER_HOST=127.0.0.1
+      - REACT_APP_BROKER_PORT=8081
+      - REACT_APP_FRONTEND_CHANNEL_KEY=Fouf91SbC1Ac8SIczG_C0LqXD6nLkssb
+      - REACT_APP_FRONTEND_CHANNEL=frontend/
+  simulator:
+    volumes:
+      - /app/node_modules
+      - ./simulator:/app
+    build:
+      dockerfile: Dockerfile
+      context: ./simulator
+    ports:
+      - "3001:3001"
+    environment:
+      - BROKER_HOST=127.0.0.1
+      - BROKER_PORT=8081
+      - DRONE_CHANNEL_KEY=Y22f91SbC1Ac8SIczG_C0En9TZHLkssb
+      - DRONE_CHANNEL=drone/
+  backend:
+    volumes:
+      - /app/node_modules
+      - ./backend:/app
+    restart: always
+    build:
+      dockerfile: Dockerfile
+      context: ./backend
+    environment:
+      - BROKER_HOST=broker
+      - BROKER_PORT=8080
+      - FRONTEND_CHANNEL_KEY=Fouf91SbC1Ac8SIczG_C0LqXD6nLkssb
+      - FRONTEND_CHANNEL=frontend/
+      - DRONE_CHANNEL_KEY=Y22f91SbC1Ac8SIczG_C0En9TZHLkssb
+      - DRONE_CHANNEL=drone/
+    depends_on:
+      - broker
