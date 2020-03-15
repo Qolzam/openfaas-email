@@ -7,5 +7,9 @@ functions:
     lang: node12
     handler: ./email-fn
     image: email-fn:latest
+    labels: 
+        com.openfaas.scale.zero: false
+    environment:
+        content_type: "application/json"
     secrets:
       - secrets
