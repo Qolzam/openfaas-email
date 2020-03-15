@@ -8,5 +8,4 @@ functions:
     handler: ./email-fn
     image: email-fn:latest
     secrets:
-      - email
-      - password
+      - secrets
