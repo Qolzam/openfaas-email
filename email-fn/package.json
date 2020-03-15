@@ -1,18 +1,17 @@
 {
-  "name": "email-fn",
+  "name": "openfaas-function",
   "version": "1.0.0",
-  "description": "",
+  "description": "OpenFaaS Function",
   "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "keywords": [],
+  "author": "OpenFaaS Ltd",
+  "license": "MIT",
   "dependencies": {
     "markdown-it": "^9.1.0",
     "markdown-it-emoji": "^1.4.0",
     "nodemailer": "^6.3.0"
-  },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "Amir Movahedi <amir.gholzam@live.com>",
-  "license": "ISC"
+  }
 }
